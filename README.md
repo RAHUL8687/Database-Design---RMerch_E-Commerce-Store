@@ -336,27 +336,4 @@ Possible improvements for future versions include:
 * Index optimization
 * SQL dashboards using Power BI or Tableau
 
----
 
-## 👨‍💻 Author
-
-**Rahul Kumar Singh**
-
-B.Sc. Computer Science & Data Analytics
-IIT Patna
-
-### Areas of Interest
-
-* SQL & Databases
-* Data Analytics
-* Software Development
-* Web Development
-* Data Science
-
----
-
-## ⭐ If You Find This Project Useful
-
-If you found this project helpful for learning SQL or database design, consider giving the repository a ⭐ on GitHub.
-
-**Built with SQL & curiosity 🚀**
