@@ -65,6 +65,7 @@ CREATE TABLE payments (
     FOREIGN KEY (order_id) REFERENCES orders(order_id)
 );
 
+
 -- Insert Data
 INSERT INTO customers (name, email, city, signup_date) VALUES
 ('Amit Sharma','amit@gmail.com','Delhi','2025-01-01'),
@@ -227,3 +228,13 @@ FROM orders
 WHERE order_status = 'Cancelled';
 
 
+ALTER TABLE customers
+ADD COLUMN password VARCHAR(255);
+
+SET SQL_SAFE_UPDATES = 0;
+
+UPDATE customers
+SET password = '123456';
+
+SELECT customer_id, name, email, password
+FROM customers;
