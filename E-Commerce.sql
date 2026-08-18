@@ -238,3 +238,134 @@ SET password = '123456';
 
 SELECT customer_id, name, email, password
 FROM customers;
+
+
+USE RMerch;
+
+SELECT * FROM customers;
+
+
+USE RMerch;
+
+SELECT *
+FROM orders
+ORDER BY order_id DESC
+LIMIT 5;
+
+
+SELECT *
+FROM order_items
+ORDER BY order_item_id DESC
+LIMIT 5;
+
+SELECT *
+FROM payments
+ORDER BY payment_id DESC
+LIMIT 5;
+
+SELECT
+    product_id,
+    product_name,
+    price,
+    stock
+FROM products
+WHERE product_id = 1;
+
+
+USE RMerch;
+
+ALTER TABLE products
+ADD COLUMN image_url TEXT;
+
+UPDATE products
+SET image_url = 'https://merchshop.in/wp-content/uploads/2019/12/Computer-Programming-Language-Python-black-hoodie.jpg'
+WHERE product_id = 1;
+
+UPDATE products
+SET image_url = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRsK7JZYYO_-9PUcEhP206ypUNQMTX37dZjFzSFx249OOwllX1knN861LA&s=10'
+WHERE product_id = 3;
+
+
+UPDATE products
+SET image_url = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFa1djg-G8R509ewyKvm_PHygAAxV7L1wzbYPHchOOealIPiTwuHqkJQ&s=10'
+WHERE product_id = 5;
+
+
+UPDATE products
+SET image_url = 'https://m.media-amazon.com/images/I/81Tmfv34W7L.jpg'
+WHERE product_id = 10;
+
+SELECT
+    product_id,
+    product_name,
+    image_url
+FROM products
+ORDER BY product_id;
+
+
+UPDATE products
+SET image_url = CASE product_id
+
+    WHEN 1 THEN 'https://merchshop.in/wp-content/uploads/2019/12/Computer-Programming-Language-Python-black-hoodie.jpg'
+
+    WHEN 2 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSI9lfKZVYOw3P6kNC7RlICH8wu5cyklVbOad9NZPj-Iw&s=10'
+
+    WHEN 3 THEN 'https://m.media-amazon.com/images/I/81Tmfv34W7L.jpg'
+
+    WHEN 4 THEN 'https://i.etsystatic.com/25582483/r/il/78a20d/2670792172/il_1080xN.2670792172_6083.jpg'
+
+    WHEN 6 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRM7SPf5Mt7JxrvCxUMqWi4SsV1EZXBZh-fKAVT7Gtyew&s=10'
+
+    WHEN 7 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLwp9DbKVoKliygCd0Q1e6fbq5k2kFKDllJXi6yAVzFzZllrZJtIL4GnQ&s=10'
+
+    WHEN 8 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnhyBpMKXPBwA2y5Z5XT6S6vSX9hqlOp7pg5u-FQES_YmJ6yo0LNV4ZCY&s=10'
+
+    WHEN 9 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQjgjH6kx9O09pybk702DGnOUnx-xj8Ji2V5tXiv39Zbg&s=10'
+
+    WHEN 11 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvwTy2bqKBJdph4pSLBrLpAyerehOSVU78ZtbTtupddS4eNEM_LbcXhudj&s=10'
+
+    WHEN 12 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsWAVH2rNDViOM9txEI36v1qfyg_LDt8Rtni1Siz9jmA&s'
+
+    WHEN 13 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpW8D53ibKZksKFTTp1WRmzLBoZEHlFdcsbCo4kLZSyg&s=10'
+
+    WHEN 14 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQblVanZXQeJ4DARKtl1qTkpzkh76OTz_zO9XpnyIg3JA&s'
+
+    WHEN 15 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThaCwQbdvfJ6Ec2zJVbsDXOasxq6nWTAxJA-jpSRqecw&s=10'
+
+    WHEN 16 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR1UmpTA0u3uTGjKx9U5GC0xFOlwsd-cDJ3fvKxx61DQNQSLNd-rj5W1elZ&s=10'
+
+    WHEN 17 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzSmXZFMTcw0TH5dfKLexUix9sHtV_l7cwaGfwkdwOiqfniAYiGonCzQQ&s=10'
+
+    WHEN 18 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFyd_s1_BQNuyVGiKnD9zwm_QzrAxKyvDorldXk-mAhA&s'
+
+    WHEN 19 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRaq70hOOlKJCk7ZNX5exhSS5vBt16vbErIrtHSFHJ9fXGeZX1_SFp54ehk&s=10'
+
+    WHEN 20 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCgavdt49TxdqU6YA2GAqtAzDMfRVD05TiWy0XQ8FVhw&s'
+
+END
+WHERE product_id IN (
+    1, 2, 3, 4,
+    6, 7, 8, 9,
+    11, 12, 13, 14,
+    15, 16, 17, 18, 19, 20
+);
+
+
+SELECT product_id, product_name, image_url
+FROM products
+ORDER BY product_id;
+
+
+UPDATE products
+SET image_url = CASE product_id
+
+    WHEN 5 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTIFtGENCFmaLE6sjxdZG0fiBJgMOsLIC8rRSZMoBhybbPo9JQiJB-PtsE&s=10'
+
+    WHEN 10 THEN 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpRVejjbXqV91VrwIMoaaTvTue7kH6ThNpZcNDYkO6rg&s'
+
+END
+WHERE product_id IN (5, 10);
+
+SELECT product_id, product_name, image_url
+FROM products
+WHERE product_id IN (5, 10);
