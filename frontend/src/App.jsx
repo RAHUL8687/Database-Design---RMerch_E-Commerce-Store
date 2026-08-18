@@ -15,7 +15,11 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [productQuantity, setProductQuantity] = useState(1)
 
-  const [orderPlaced, setOrderPlaced] = useState(false)
+  const [selectedCategory, setSelectedCategory] =
+    useState("All")
+
+  const [orderPlaced, setOrderPlaced] =
+    useState(false)
 
   // =====================================================
   // FETCH PRODUCTS FROM BACKEND
@@ -35,30 +39,48 @@ function App() {
 
         if (!response.ok || !data.success) {
           throw new Error(
-            data.message || "Failed to load products"
+            data.message ||
+              "Failed to load products"
           )
         }
 
-        const formattedProducts = data.products.map(
-          (product) => ({
-            id: product.product_id,
-            name: product.product_name,
-            category: product.category,
-            price: Number(product.price),
-            stock: Number(product.stock),
+        const formattedProducts =
+          data.products.map((product) => {
+            let category = product.category
 
-            image:
-              product.image_url ||
-              `https://placehold.co/600x600?text=${encodeURIComponent(
-                product.product_name
-              )}`,
+            // Put sticker products into Stickers category
+            if (
+              product.product_name ===
+                "Sticker Pack" ||
+              product.product_name ===
+                "Terminal Stickers"
+            ) {
+              category = "Stickers"
+            }
 
-            description:
-              `A premium ${String(
-                product.category
-              ).toLowerCase()} designed for developers and technology enthusiasts.`,
+            return {
+              id: product.product_id,
+
+              name: product.product_name,
+
+              category: category,
+
+              price: Number(product.price),
+
+              stock: Number(product.stock),
+
+              image:
+                product.image_url ||
+                `https://placehold.co/600x600?text=${encodeURIComponent(
+                  product.product_name
+                )}`,
+
+              description:
+                `A premium ${String(
+                  product.category
+                ).toLowerCase()} designed for developers and technology enthusiasts.`,
+            }
           })
-        )
 
         setProducts(formattedProducts)
       } catch (error) {
@@ -80,25 +102,50 @@ function App() {
   }, [])
 
   // =====================================================
+  // FILTER PRODUCTS
+  // =====================================================
+
+  const filteredProducts =
+    selectedCategory === "All"
+      ? products
+      : products.filter(
+          (product) =>
+            product.category ===
+            selectedCategory
+        )
+
+  // =====================================================
   // ADD TO CART
   // =====================================================
 
-  const addToCart = (product, quantity = 1) => {
+  const addToCart = (
+    product,
+    quantity = 1
+  ) => {
     if (product.stock <= 0) {
-      alert("This product is out of stock.")
+      alert(
+        "This product is out of stock."
+      )
+
       return
     }
 
     setCart((currentCart) => {
-      const existingProduct = currentCart.find(
-        (item) => item.id === product.id
-      )
+      const existingProduct =
+        currentCart.find(
+          (item) =>
+            item.id === product.id
+        )
 
       if (existingProduct) {
         const newQuantity =
-          existingProduct.quantity + quantity
+          existingProduct.quantity +
+          quantity
 
-        if (newQuantity > product.stock) {
+        if (
+          newQuantity >
+          product.stock
+        ) {
           alert(
             `Only ${product.stock} items are available in stock.`
           )
@@ -106,17 +153,22 @@ function App() {
           return currentCart
         }
 
-        return currentCart.map((item) =>
-          item.id === product.id
-            ? {
-                ...item,
-                quantity: newQuantity,
-              }
-            : item
+        return currentCart.map(
+          (item) =>
+            item.id === product.id
+              ? {
+                  ...item,
+                  quantity:
+                    newQuantity,
+                }
+              : item
         )
       }
 
-      if (quantity > product.stock) {
+      if (
+        quantity >
+        product.stock
+      ) {
         alert(
           `Only ${product.stock} items are available in stock.`
         )
@@ -145,7 +197,10 @@ function App() {
           return item
         }
 
-        if (item.quantity >= item.stock) {
+        if (
+          item.quantity >=
+          item.stock
+        ) {
           alert(
             `Only ${item.stock} items are available in stock.`
           )
@@ -155,7 +210,8 @@ function App() {
 
         return {
           ...item,
-          quantity: item.quantity + 1,
+          quantity:
+            item.quantity + 1,
         }
       })
     )
@@ -172,11 +228,15 @@ function App() {
           item.id === id
             ? {
                 ...item,
-                quantity: item.quantity - 1,
+                quantity:
+                  item.quantity - 1,
               }
             : item
         )
-        .filter((item) => item.quantity > 0)
+        .filter(
+          (item) =>
+            item.quantity > 0
+        )
     )
   }
 
@@ -187,7 +247,8 @@ function App() {
   const removeFromCart = (id) => {
     setCart((currentCart) =>
       currentCart.filter(
-        (item) => item.id !== id
+        (item) =>
+          item.id !== id
       )
     )
   }
@@ -209,25 +270,32 @@ function App() {
   const cartTotal = cart.reduce(
     (total, item) =>
       total +
-      item.price * item.quantity,
+      item.price *
+        item.quantity,
     0
   )
 
   // =====================================================
-  // OPEN PRODUCT DETAILS
+  // OPEN PRODUCT
   // =====================================================
 
-  const openProduct = (product) => {
-    setSelectedProduct(product)
+  const openProduct = (
+    product
+  ) => {
+    setSelectedProduct(
+      product
+    )
+
     setProductQuantity(1)
   }
 
   // =====================================================
-  // CLOSE PRODUCT DETAILS
+  // CLOSE PRODUCT
   // =====================================================
 
   const closeProduct = () => {
     setSelectedProduct(null)
+
     setProductQuantity(1)
   }
 
@@ -240,8 +308,14 @@ function App() {
       return
     }
 
-    if (selectedProduct.stock <= 0) {
-      alert("This product is out of stock.")
+    if (
+      selectedProduct.stock <=
+      0
+    ) {
+      alert(
+        "This product is out of stock."
+      )
+
       return
     }
 
@@ -262,7 +336,28 @@ function App() {
     )
 
     closeProduct()
+
     setCartOpen(true)
+  }
+
+  // =====================================================
+  // SELECT CATEGORY
+  // =====================================================
+
+  const selectCategory = (
+    category
+  ) => {
+    setSelectedCategory(
+      category
+    )
+
+    setTimeout(() => {
+      document
+        .getElementById("shop")
+        ?.scrollIntoView({
+          behavior: "smooth",
+        })
+    }, 50)
   }
 
   // =====================================================
@@ -271,58 +366,68 @@ function App() {
 
   const placeOrder = async () => {
     const savedUser =
-      localStorage.getItem("trraUser")
+      localStorage.getItem(
+        "trraUser"
+      )
 
-    // Check login
     if (!savedUser) {
       alert(
         "Please login before placing an order."
       )
 
       setCartOpen(false)
+
       setLoginOpen(true)
 
       return
     }
 
-    // Check cart
     if (cart.length === 0) {
-      alert("Your cart is empty.")
+      alert(
+        "Your cart is empty."
+      )
+
       return
     }
 
     try {
-      const user = JSON.parse(savedUser)
+      const user =
+        JSON.parse(
+          savedUser
+        )
 
-      // Convert cart to backend format
-      const orderItems = cart.map(
-        (item) => ({
-          product_id: item.id,
-          quantity: item.quantity,
-        })
-      )
+      const orderItems =
+        cart.map((item) => ({
+          product_id:
+            item.id,
 
-      const response = await fetch(
-        "http://localhost:5001/api/orders",
-        {
-          method: "POST",
+          quantity:
+            item.quantity,
+        }))
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+      const response =
+        await fetch(
+          "http://localhost:5001/api/orders",
+          {
+            method: "POST",
 
-          body: JSON.stringify({
-            customer_id:
-              user.customer_id,
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
 
-            items: orderItems,
+            body: JSON.stringify({
+              customer_id:
+                user.customer_id,
 
-            payment_mode:
-              "Cash on Delivery",
-          }),
-        }
-      )
+              items:
+                orderItems,
+
+              payment_mode:
+                "Cash on Delivery",
+            }),
+          }
+        )
 
       const data =
         await response.json()
@@ -342,14 +447,77 @@ function App() {
         data.order
       )
 
-      // Empty cart
       setCart([])
 
-      // Close cart
       setCartOpen(false)
 
-      // Show success popup
       setOrderPlaced(true)
+
+      // Refresh products to get updated stock
+      const productResponse =
+        await fetch(
+          "http://localhost:5001/api/products"
+        )
+
+      const productData =
+        await productResponse.json()
+
+      if (
+        productData.success
+      ) {
+        const updatedProducts =
+          productData.products.map(
+            (product) => {
+              let category =
+                product.category
+
+              if (
+                product.product_name ===
+                  "Sticker Pack" ||
+                product.product_name ===
+                  "Terminal Stickers"
+              ) {
+                category =
+                  "Stickers"
+              }
+
+              return {
+                id:
+                  product.product_id,
+
+                name:
+                  product.product_name,
+
+                category,
+
+                price:
+                  Number(
+                    product.price
+                  ),
+
+                stock:
+                  Number(
+                    product.stock
+                  ),
+
+                image:
+                  product.image_url ||
+                  `https://placehold.co/600x600?text=${encodeURIComponent(
+                    product.product_name
+                  )}`,
+
+                description:
+                  `A premium ${String(
+                    product.category
+                  ).toLowerCase()} designed for developers and technology enthusiasts.`,
+              }
+            }
+          )
+
+        setProducts(
+          updatedProducts
+        )
+      }
     } catch (error) {
       console.error(
         "Order error:",
@@ -384,11 +552,15 @@ function App() {
             >
 
               <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center text-lg font-black shadow-lg">
+
                 Tr
+
                 <span className="text-gray-400 mx-0.5">
                   &
                 </span>
+
                 Ra
+
               </div>
 
               <div className="leading-tight">
@@ -443,37 +615,39 @@ function App() {
 
             <div className="flex items-center gap-3">
 
-              {/* LOGIN */}
-
               <button
                 onClick={() =>
-                  setLoginOpen(true)
+                  setLoginOpen(
+                    true
+                  )
                 }
                 className="border border-gray-900 px-5 py-2.5 rounded-full font-medium hover:bg-black hover:text-white transition"
               >
                 Login
               </button>
 
-              {/* CART */}
-
               <button
                 onClick={() =>
-                  setCartOpen(true)
+                  setCartOpen(
+                    true
+                  )
                 }
                 className="border border-gray-900 px-5 py-2.5 rounded-full font-medium hover:bg-black hover:text-white transition"
               >
                 Cart ({cartCount})
               </button>
 
-              {/* MOBILE MENU */}
-
               <button
                 onClick={() =>
-                  setMenuOpen(!menuOpen)
+                  setMenuOpen(
+                    !menuOpen
+                  )
                 }
                 className="md:hidden text-2xl"
               >
-                {menuOpen ? "×" : "☰"}
+                {menuOpen
+                  ? "×"
+                  : "☰"}
               </button>
 
             </div>
@@ -488,7 +662,9 @@ function App() {
               <a
                 href="#"
                 onClick={() =>
-                  setMenuOpen(false)
+                  setMenuOpen(
+                    false
+                  )
                 }
               >
                 Home
@@ -497,7 +673,9 @@ function App() {
               <a
                 href="#shop"
                 onClick={() =>
-                  setMenuOpen(false)
+                  setMenuOpen(
+                    false
+                  )
                 }
               >
                 Shop
@@ -506,7 +684,9 @@ function App() {
               <a
                 href="#categories"
                 onClick={() =>
-                  setMenuOpen(false)
+                  setMenuOpen(
+                    false
+                  )
                 }
               >
                 Categories
@@ -515,7 +695,9 @@ function App() {
               <a
                 href="#about"
                 onClick={() =>
-                  setMenuOpen(false)
+                  setMenuOpen(
+                    false
+                  )
                 }
               >
                 About
@@ -523,8 +705,13 @@ function App() {
 
               <button
                 onClick={() => {
-                  setLoginOpen(true)
-                  setMenuOpen(false)
+                  setLoginOpen(
+                    true
+                  )
+
+                  setMenuOpen(
+                    false
+                  )
                 }}
                 className="text-left font-medium"
               >
@@ -551,11 +738,17 @@ function App() {
           </p>
 
           <h2 className="text-6xl md:text-8xl font-black tracking-tight">
+
             CODE.
+
             <br />
+
             BUILD.
+
             <br />
+
             WEAR.
+
           </h2>
 
           <p className="mt-6 text-gray-500 max-w-xl mx-auto text-lg">
@@ -592,9 +785,30 @@ function App() {
               Our collection
             </p>
 
-            <h2 className="text-4xl md:text-5xl font-bold mt-3">
-              Featured Products
-            </h2>
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+
+              <h2 className="text-4xl md:text-5xl font-bold mt-3">
+                {selectedCategory ===
+                "All"
+                  ? "Featured Products"
+                  : selectedCategory}
+              </h2>
+
+              {selectedCategory !==
+                "All" && (
+                <button
+                  onClick={() =>
+                    setSelectedCategory(
+                      "All"
+                    )
+                  }
+                  className="border border-black px-5 py-2 rounded-full text-sm font-medium hover:bg-black hover:text-white transition"
+                >
+                  View All Products
+                </button>
+              )}
+
+            </div>
 
           </div>
 
@@ -644,23 +858,26 @@ function App() {
               </div>
             )}
 
-          {/* PRODUCTS */}
+          {/* PRODUCT GRID */}
 
           {!loadingProducts &&
             !productError &&
-            products.length > 0 && (
+            filteredProducts.length >
+              0 && (
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-                {products.map(
+                {filteredProducts.map(
                   (product) => (
 
                     <div
-                      key={product.id}
+                      key={
+                        product.id
+                      }
                       className="bg-white group"
                     >
 
-                      {/* PRODUCT IMAGE */}
+                      {/* IMAGE */}
 
                       <button
                         onClick={() =>
@@ -712,12 +929,14 @@ function App() {
 
                         <p
                           className={`text-xs mt-2 ${
-                            product.stock > 0
+                            product.stock >
+                            0
                               ? "text-green-600"
                               : "text-red-600"
                           }`}
                         >
-                          {product.stock > 0
+                          {product.stock >
+                          0
                             ? `${product.stock} in stock`
                             : "Out of stock"}
                         </p>
@@ -755,11 +974,12 @@ function App() {
               </div>
             )}
 
-          {/* NO PRODUCTS */}
+          {/* EMPTY CATEGORY */}
 
           {!loadingProducts &&
             !productError &&
-            products.length === 0 && (
+            filteredProducts.length ===
+              0 && (
 
               <div className="py-20 text-center">
 
@@ -768,7 +988,7 @@ function App() {
                 </div>
 
                 <h3 className="text-xl font-semibold">
-                  No products available
+                  No products found
                 </h3>
 
               </div>
@@ -805,16 +1025,19 @@ function App() {
                 "Clothing",
                 "Hoodies & T-Shirts",
               ],
+
               [
                 "☕",
                 "Accessories",
                 "Mugs, Caps & More",
               ],
+
               [
                 "📓",
                 "Stationery",
                 "Notebooks & Cards",
               ],
+
               [
                 "✨",
                 "Stickers",
@@ -827,9 +1050,19 @@ function App() {
                 subtitle,
               ]) => (
 
-                <div
+                <button
                   key={title}
-                  className="bg-gray-100 p-8 h-64 flex flex-col justify-between hover:bg-black hover:text-white transition"
+                  onClick={() =>
+                    selectCategory(
+                      title
+                    )
+                  }
+                  className={`text-left w-full p-8 h-64 flex flex-col justify-between transition ${
+                    selectedCategory ===
+                    title
+                      ? "bg-black text-white"
+                      : "bg-gray-100 hover:bg-black hover:text-white"
+                  }`}
                 >
 
                   <span className="text-5xl">
@@ -848,10 +1081,32 @@ function App() {
 
                   </div>
 
-                </div>
+                </button>
 
               )
             )}
+
+          </div>
+
+          {/* ALL PRODUCTS */}
+
+          <div className="text-center mt-8">
+
+            <button
+              onClick={() =>
+                selectCategory(
+                  "All"
+                )
+              }
+              className={`px-6 py-3 rounded-full font-medium border transition ${
+                selectedCategory ===
+                "All"
+                  ? "bg-black text-white border-black"
+                  : "border-black hover:bg-black hover:text-white"
+              }`}
+            >
+              View All Products
+            </button>
 
           </div>
 
@@ -960,8 +1215,6 @@ function App() {
 
         <div className="h-full flex flex-col">
 
-          {/* CART HEADER */}
-
           <div className="flex items-center justify-between p-6 border-b">
 
             <div>
@@ -981,7 +1234,9 @@ function App() {
 
             <button
               onClick={() =>
-                setCartOpen(false)
+                setCartOpen(
+                  false
+                )
               }
               className="text-2xl hover:text-gray-500"
             >
@@ -989,8 +1244,6 @@ function App() {
             </button>
 
           </div>
-
-          {/* CART ITEMS */}
 
           <div className="flex-1 overflow-y-auto p-6">
 
@@ -1013,7 +1266,9 @@ function App() {
 
                 <button
                   onClick={() =>
-                    setCartOpen(false)
+                    setCartOpen(
+                      false
+                    )
                   }
                   className="mt-6 bg-black text-white px-6 py-3 rounded-full"
                 >
@@ -1026,116 +1281,118 @@ function App() {
 
               <div className="space-y-6">
 
-                {cart.map((item) => (
+                {cart.map(
+                  (item) => (
 
-                  <div
-                    key={item.id}
-                    className="flex gap-4 border-b pb-6"
-                  >
+                    <div
+                      key={
+                        item.id
+                      }
+                      className="flex gap-4 border-b pb-6"
+                    >
 
-                    {/* IMAGE */}
+                      <div className="w-20 h-20 bg-gray-100 shrink-0">
 
-                    <div className="w-20 h-20 bg-gray-100 shrink-0">
-
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-contain"
-                      />
-
-                    </div>
-
-                    {/* DETAILS */}
-
-                    <div className="flex-1">
-
-                      <div className="flex justify-between gap-3">
-
-                        <h3 className="font-semibold">
-                          {item.name}
-                        </h3>
-
-                        <button
-                          onClick={() =>
-                            removeFromCart(
-                              item.id
-                            )
+                        <img
+                          src={
+                            item.image
                           }
-                          className="text-gray-400 hover:text-black"
-                        >
-                          ×
-                        </button>
+                          alt={
+                            item.name
+                          }
+                          className="w-full h-full object-contain"
+                        />
 
                       </div>
 
-                      <p className="text-sm text-gray-500 mt-1">
-                        ₹
-                        {item.price.toLocaleString(
-                          "en-IN"
-                        )}
-                      </p>
+                      <div className="flex-1">
 
-                      {/* QUANTITY */}
+                        <div className="flex justify-between gap-3">
 
-                      <div className="flex justify-between items-center mt-4">
-
-                        <div className="flex border rounded-full">
-
-                          <button
-                            onClick={() =>
-                              decreaseQuantity(
-                                item.id
-                              )
-                            }
-                            className="px-3 py-1 hover:bg-gray-100 rounded-l-full"
-                          >
-                            −
-                          </button>
-
-                          <span className="px-3 py-1">
+                          <h3 className="font-semibold">
                             {
-                              item.quantity
+                              item.name
                             }
-                          </span>
+                          </h3>
 
                           <button
                             onClick={() =>
-                              increaseQuantity(
+                              removeFromCart(
                                 item.id
                               )
                             }
-                            className="px-3 py-1 hover:bg-gray-100 rounded-r-full"
+                            className="text-gray-400 hover:text-black"
                           >
-                            +
+                            ×
                           </button>
 
                         </div>
 
-                        <strong>
+                        <p className="text-sm text-gray-500 mt-1">
                           ₹
-                          {(
-                            item.price *
-                            item.quantity
-                          ).toLocaleString(
+                          {item.price.toLocaleString(
                             "en-IN"
                           )}
-                        </strong>
+                        </p>
+
+                        <div className="flex justify-between items-center mt-4">
+
+                          <div className="flex border rounded-full">
+
+                            <button
+                              onClick={() =>
+                                decreaseQuantity(
+                                  item.id
+                                )
+                              }
+                              className="px-3 py-1 hover:bg-gray-100 rounded-l-full"
+                            >
+                              −
+                            </button>
+
+                            <span className="px-3 py-1">
+                              {
+                                item.quantity
+                              }
+                            </span>
+
+                            <button
+                              onClick={() =>
+                                increaseQuantity(
+                                  item.id
+                                )
+                              }
+                              className="px-3 py-1 hover:bg-gray-100 rounded-r-full"
+                            >
+                              +
+                            </button>
+
+                          </div>
+
+                          <strong>
+                            ₹
+                            {(
+                              item.price *
+                              item.quantity
+                            ).toLocaleString(
+                              "en-IN"
+                            )}
+                          </strong>
+
+                        </div>
 
                       </div>
 
                     </div>
 
-                  </div>
-
-                ))}
+                  )
+                )}
 
               </div>
 
             )}
 
           </div>
-
-          {/* CART FOOTER */}
 
           {cart.length > 0 && (
 
@@ -1157,15 +1414,17 @@ function App() {
               </div>
 
               <button
-                onClick={placeOrder}
+                onClick={
+                  placeOrder
+                }
                 className="w-full bg-black text-white py-4 rounded-full hover:bg-gray-800 transition font-semibold"
               >
                 Place Order →
               </button>
 
               <p className="text-xs text-gray-500 text-center mt-4">
-                Cash on Delivery • Secure
-                checkout
+                Cash on Delivery •
+                Secure checkout
               </p>
 
             </div>
@@ -1184,7 +1443,9 @@ function App() {
 
         <div
           className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center p-4"
-          onClick={closeProduct}
+          onClick={
+            closeProduct
+          }
         >
 
           <div
@@ -1195,15 +1456,15 @@ function App() {
           >
 
             <button
-              onClick={closeProduct}
+              onClick={
+                closeProduct
+              }
               className="absolute top-5 right-7 text-3xl hover:text-gray-500"
             >
               ×
             </button>
 
             <div className="grid md:grid-cols-2 gap-10">
-
-              {/* IMAGE */}
 
               <div className="bg-gray-100 rounded-2xl h-[400px] flex items-center justify-center">
 
@@ -1218,8 +1479,6 @@ function App() {
                 />
 
               </div>
-
-              {/* DETAILS */}
 
               <div className="flex flex-col justify-center">
 
@@ -1261,8 +1520,6 @@ function App() {
                     ? `${selectedProduct.stock} items available`
                     : "Out of stock"}
                 </p>
-
-                {/* QUANTITY */}
 
                 {selectedProduct.stock >
                   0 && (
@@ -1316,8 +1573,6 @@ function App() {
                   </div>
                 )}
 
-                {/* TOTAL */}
-
                 {selectedProduct.stock >
                   0 && (
 
@@ -1339,8 +1594,6 @@ function App() {
 
                   </div>
                 )}
-
-                {/* ADD TO CART */}
 
                 <button
                   onClick={
@@ -1398,7 +1651,9 @@ function App() {
 
             <button
               onClick={() =>
-                setOrderPlaced(false)
+                setOrderPlaced(
+                  false
+                )
               }
               className="w-full bg-black text-white py-4 rounded-full mt-8 hover:bg-gray-800 transition"
             >
@@ -1419,7 +1674,9 @@ function App() {
 
         <Login
           onClose={() =>
-            setLoginOpen(false)
+            setLoginOpen(
+              false
+            )
           }
         />
 
