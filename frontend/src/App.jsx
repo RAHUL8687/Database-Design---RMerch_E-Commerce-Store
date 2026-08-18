@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Login from "./Login"
 
 function App() {
@@ -7,76 +7,121 @@ function App() {
   const [loginOpen, setLoginOpen] = useState(false)
 
   const [cart, setCart] = useState([])
+  const [products, setProducts] = useState([])
+
+  const [loadingProducts, setLoadingProducts] = useState(true)
+  const [productError, setProductError] = useState("")
+
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [productQuantity, setProductQuantity] = useState(1)
+
   const [orderPlaced, setOrderPlaced] = useState(false)
 
   // =====================================================
-  // PRODUCTS
+  // FETCH PRODUCTS FROM BACKEND
   // =====================================================
 
-  const products = [
-    {
-      id: 1,
-      name: "Python Hoodie",
-      category: "Clothing",
-      price: 1999,
-      image:
-        "https://merchshop.in/wp-content/uploads/2019/12/Computer-Programming-Language-Python-black-hoodie.jpg",
-      description:
-        "A stylish Python-inspired hoodie designed for programmers and Python enthusiasts.",
-    },
-    {
-      id: 2,
-      name: "Debugging Mug",
-      category: "Accessories",
-      price: 599,
-      image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRsK7JZYYO_-9PUcEhP206ypUNQMTX37dZjFzSFx249OOwllX1knN861LA&s=10",
-      description:
-        "A coding-inspired mug for developers and programmers.",
-    },
-    {
-      id: 3,
-      name: "Keyboard Mat",
-      category: "Accessories",
-      price: 999,
-      image:
-        "https://m.media-amazon.com/images/I/81Tmfv34W7L.jpg",
-      description:
-        "A stylish keyboard mat for your coding and gaming desk setup.",
-    },
-    {
-      id: 4,
-      name: "DSA Notebook",
-      category: "Stationery",
-      price: 499,
-      image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFa1djg-G8R509ewyKvm_PHygAAxV7L1wzbYPHchOOealIPiTwuHqkJQ&s=10",
-      description:
-        "A notebook designed for DSA practice, algorithms and coding notes.",
-    },
-  ]
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoadingProducts(true)
+        setProductError("")
+
+        const response = await fetch(
+          "http://localhost:5001/api/products"
+        )
+
+        const data = await response.json()
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data.message || "Failed to load products"
+          )
+        }
+
+        const formattedProducts = data.products.map(
+          (product) => ({
+            id: product.product_id,
+            name: product.product_name,
+            category: product.category,
+            price: Number(product.price),
+            stock: Number(product.stock),
+
+            image:
+              product.image_url ||
+              `https://placehold.co/600x600?text=${encodeURIComponent(
+                product.product_name
+              )}`,
+
+            description:
+              `A premium ${String(
+                product.category
+              ).toLowerCase()} designed for developers and technology enthusiasts.`,
+          })
+        )
+
+        setProducts(formattedProducts)
+      } catch (error) {
+        console.error(
+          "Products fetch error:",
+          error
+        )
+
+        setProductError(
+          error.message ||
+            "Unable to load products"
+        )
+      } finally {
+        setLoadingProducts(false)
+      }
+    }
+
+    fetchProducts()
+  }, [])
 
   // =====================================================
   // ADD TO CART
   // =====================================================
 
   const addToCart = (product, quantity = 1) => {
+    if (product.stock <= 0) {
+      alert("This product is out of stock.")
+      return
+    }
+
     setCart((currentCart) => {
       const existingProduct = currentCart.find(
         (item) => item.id === product.id
       )
 
       if (existingProduct) {
+        const newQuantity =
+          existingProduct.quantity + quantity
+
+        if (newQuantity > product.stock) {
+          alert(
+            `Only ${product.stock} items are available in stock.`
+          )
+
+          return currentCart
+        }
+
         return currentCart.map((item) =>
           item.id === product.id
             ? {
                 ...item,
-                quantity: item.quantity + quantity,
+                quantity: newQuantity,
               }
             : item
         )
+      }
+
+      if (quantity > product.stock) {
+        alert(
+          `Only ${product.stock} items are available in stock.`
+        )
+
+        return currentCart
       }
 
       return [
@@ -95,14 +140,24 @@ function App() {
 
   const increaseQuantity = (id) => {
     setCart((currentCart) =>
-      currentCart.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              quantity: item.quantity + 1,
-            }
-          : item
-      )
+      currentCart.map((item) => {
+        if (item.id !== id) {
+          return item
+        }
+
+        if (item.quantity >= item.stock) {
+          alert(
+            `Only ${item.stock} items are available in stock.`
+          )
+
+          return item
+        }
+
+        return {
+          ...item,
+          quantity: item.quantity + 1,
+        }
+      })
     )
   }
 
@@ -131,7 +186,9 @@ function App() {
 
   const removeFromCart = (id) => {
     setCart((currentCart) =>
-      currentCart.filter((item) => item.id !== id)
+      currentCart.filter(
+        (item) => item.id !== id
+      )
     )
   }
 
@@ -140,7 +197,8 @@ function App() {
   // =====================================================
 
   const cartCount = cart.reduce(
-    (total, item) => total + item.quantity,
+    (total, item) =>
+      total + item.quantity,
     0
   )
 
@@ -150,7 +208,8 @@ function App() {
 
   const cartTotal = cart.reduce(
     (total, item) =>
-      total + item.price * item.quantity,
+      total +
+      item.price * item.quantity,
     0
   )
 
@@ -178,6 +237,22 @@ function App() {
 
   const addSelectedProduct = () => {
     if (!selectedProduct) {
+      return
+    }
+
+    if (selectedProduct.stock <= 0) {
+      alert("This product is out of stock.")
+      return
+    }
+
+    if (
+      productQuantity >
+      selectedProduct.stock
+    ) {
+      alert(
+        `Only ${selectedProduct.stock} items are available in stock.`
+      )
+
       return
     }
 
@@ -219,42 +294,49 @@ function App() {
     try {
       const user = JSON.parse(savedUser)
 
-      // Convert frontend cart
-      // into backend order items
-      const orderItems = cart.map((item) => ({
-        product_id: item.id,
-        quantity: item.quantity,
-      }))
+      // Convert cart to backend format
+      const orderItems = cart.map(
+        (item) => ({
+          product_id: item.id,
+          quantity: item.quantity,
+        })
+      )
 
-      // Send order to backend
       const response = await fetch(
         "http://localhost:5001/api/orders",
         {
           method: "POST",
 
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
 
           body: JSON.stringify({
-            customer_id: user.customer_id,
+            customer_id:
+              user.customer_id,
+
             items: orderItems,
-            payment_mode: "Cash on Delivery",
+
+            payment_mode:
+              "Cash on Delivery",
           }),
         }
       )
 
-      const data = await response.json()
+      const data =
+        await response.json()
 
-      // Backend error
-      if (!response.ok || !data.success) {
+      if (
+        !response.ok ||
+        !data.success
+      ) {
         throw new Error(
           data.message ||
             "Order could not be placed"
         )
       }
 
-      // Show order information
       console.log(
         "Order created successfully:",
         data.order
@@ -401,7 +483,6 @@ function App() {
           {/* MOBILE NAVIGATION */}
 
           {menuOpen && (
-
             <div className="md:hidden mt-5 pt-5 border-t flex flex-col gap-4">
 
               <a
@@ -451,7 +532,6 @@ function App() {
               </button>
 
             </div>
-
           )}
 
         </div>
@@ -479,9 +559,9 @@ function App() {
           </h2>
 
           <p className="mt-6 text-gray-500 max-w-xl mx-auto text-lg">
-            Coding-inspired merchandise for
-            developers, programmers and technology
-            enthusiasts.
+            Coding-inspired merchandise
+            for developers, programmers
+            and technology enthusiasts.
           </p>
 
           <a
@@ -518,71 +598,181 @@ function App() {
 
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* LOADING */}
 
-            {products.map((product) => (
+          {loadingProducts && (
+            <div className="py-20 text-center">
 
-              <div
-                key={product.id}
-                className="bg-white group"
-              >
+              <div className="text-5xl mb-5">
+                🛍️
+              </div>
 
-                {/* PRODUCT IMAGE */}
+              <p className="text-gray-500">
+                Loading products...
+              </p>
+
+            </div>
+          )}
+
+          {/* ERROR */}
+
+          {!loadingProducts &&
+            productError && (
+              <div className="py-20 text-center">
+
+                <div className="text-5xl mb-5">
+                  ⚠️
+                </div>
+
+                <h3 className="text-xl font-semibold">
+                  Unable to load products
+                </h3>
+
+                <p className="text-gray-500 mt-2">
+                  {productError}
+                </p>
 
                 <button
                   onClick={() =>
-                    openProduct(product)
+                    window.location.reload()
                   }
-                  className="w-full"
+                  className="mt-6 bg-black text-white px-6 py-3 rounded-full"
                 >
-
-                  <div className="h-80 bg-gray-100 overflow-hidden flex items-center justify-center">
-
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-contain p-5 group-hover:scale-105 transition duration-300"
-                    />
-
-                  </div>
-
+                  Try Again
                 </button>
 
-                {/* PRODUCT INFO */}
+              </div>
+            )}
 
-                <div className="p-5">
+          {/* PRODUCTS */}
 
-                  <p className="text-xs uppercase text-gray-500">
-                    {product.category}
-                  </p>
+          {!loadingProducts &&
+            !productError &&
+            products.length > 0 && (
 
-                  <h3 className="font-semibold text-lg mt-1">
-                    {product.name}
-                  </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-                  <p className="mt-2 font-medium">
-                    ₹
-                    {product.price.toLocaleString(
-                      "en-IN"
-                    )}
-                  </p>
+                {products.map(
+                  (product) => (
 
-                  <button
-                    onClick={() =>
-                      addToCart(product)
-                    }
-                    className="mt-4 w-full bg-black text-white py-3 rounded-full hover:bg-gray-800 transition"
-                  >
-                    Add to Cart
-                  </button>
+                    <div
+                      key={product.id}
+                      className="bg-white group"
+                    >
 
-                </div>
+                      {/* PRODUCT IMAGE */}
+
+                      <button
+                        onClick={() =>
+                          openProduct(
+                            product
+                          )
+                        }
+                        className="w-full"
+                      >
+
+                        <div className="h-80 bg-gray-100 overflow-hidden flex items-center justify-center">
+
+                          <img
+                            src={
+                              product.image
+                            }
+                            alt={
+                              product.name
+                            }
+                            className="w-full h-full object-contain p-5 group-hover:scale-105 transition duration-300"
+                          />
+
+                        </div>
+
+                      </button>
+
+                      {/* PRODUCT INFO */}
+
+                      <div className="p-5">
+
+                        <p className="text-xs uppercase text-gray-500">
+                          {
+                            product.category
+                          }
+                        </p>
+
+                        <h3 className="font-semibold text-lg mt-1">
+                          {
+                            product.name
+                          }
+                        </h3>
+
+                        <p className="mt-2 font-medium">
+                          ₹
+                          {product.price.toLocaleString(
+                            "en-IN"
+                          )}
+                        </p>
+
+                        <p
+                          className={`text-xs mt-2 ${
+                            product.stock > 0
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {product.stock > 0
+                            ? `${product.stock} in stock`
+                            : "Out of stock"}
+                        </p>
+
+                        <button
+                          onClick={() =>
+                            addToCart(
+                              product
+                            )
+                          }
+                          disabled={
+                            product.stock <=
+                            0
+                          }
+                          className={`mt-4 w-full text-white py-3 rounded-full transition ${
+                            product.stock >
+                            0
+                              ? "bg-black hover:bg-gray-800"
+                              : "bg-gray-400 cursor-not-allowed"
+                          }`}
+                        >
+                          {product.stock >
+                          0
+                            ? "Add to Cart"
+                            : "Out of Stock"}
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  )
+                )}
 
               </div>
+            )}
 
-            ))}
+          {/* NO PRODUCTS */}
 
-          </div>
+          {!loadingProducts &&
+            !productError &&
+            products.length === 0 && (
+
+              <div className="py-20 text-center">
+
+                <div className="text-5xl mb-5">
+                  📦
+                </div>
+
+                <h3 className="text-xl font-semibold">
+                  No products available
+                </h3>
+
+              </div>
+            )}
 
         </div>
 
@@ -705,10 +895,10 @@ function App() {
             </p>
 
             <p className="text-lg text-gray-600 leading-relaxed mt-6">
-              From coding-inspired hoodies and
-              mugs to notebooks and accessories,
-              Tr&Ra brings technology and style
-              together.
+              From coding-inspired hoodies
+              and mugs to notebooks and
+              accessories, Tr&Ra brings
+              technology and style together.
             </p>
 
           </div>
@@ -730,12 +920,13 @@ function App() {
           </h2>
 
           <p className="text-gray-400 mt-4">
-            Coding-inspired merchandise for
-            developers.
+            Coding-inspired merchandise
+            for developers.
           </p>
 
           <div className="border-t border-gray-800 mt-12 pt-6 text-sm text-gray-500">
-            © 2026 Tr&Ra Merch Store. All rights reserved.
+            © 2026 Tr&Ra Merch Store.
+            All rights reserved.
           </div>
 
         </div>
@@ -747,14 +938,12 @@ function App() {
       ===================================================== */}
 
       {cartOpen && (
-
         <div
           className="fixed inset-0 z-[60] bg-black/40"
           onClick={() =>
             setCartOpen(false)
           }
         />
-
       )}
 
       {/* =====================================================
@@ -783,7 +972,9 @@ function App() {
 
               <p className="text-sm text-gray-500">
                 {cartCount} item
-                {cartCount !== 1 ? "s" : ""}
+                {cartCount !== 1
+                  ? "s"
+                  : ""}
               </p>
 
             </div>
@@ -902,7 +1093,9 @@ function App() {
                           </button>
 
                           <span className="px-3 py-1">
-                            {item.quantity}
+                            {
+                              item.quantity
+                            }
                           </span>
 
                           <button
@@ -962,8 +1155,6 @@ function App() {
                 </span>
 
               </div>
-
-              {/* REAL ORDER BUTTON */}
 
               <button
                 onClick={placeOrder}
@@ -1057,68 +1248,97 @@ function App() {
                   }
                 </p>
 
+                <p
+                  className={`mt-5 font-medium ${
+                    selectedProduct.stock >
+                    0
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {selectedProduct.stock >
+                  0
+                    ? `${selectedProduct.stock} items available`
+                    : "Out of stock"}
+                </p>
+
                 {/* QUANTITY */}
 
-                <div className="mt-8">
+                {selectedProduct.stock >
+                  0 && (
 
-                  <p className="font-semibold mb-3">
-                    Quantity
-                  </p>
+                  <div className="mt-8">
 
-                  <div className="flex items-center border rounded-full w-fit">
+                    <p className="font-semibold mb-3">
+                      Quantity
+                    </p>
 
-                    <button
-                      onClick={() =>
-                        setProductQuantity(
-                          Math.max(
-                            1,
-                            productQuantity - 1
+                    <div className="flex items-center border rounded-full w-fit">
+
+                      <button
+                        onClick={() =>
+                          setProductQuantity(
+                            Math.max(
+                              1,
+                              productQuantity -
+                                1
+                            )
                           )
-                        )
-                      }
-                      className="px-5 py-3 hover:bg-gray-100 rounded-l-full"
-                    >
-                      −
-                    </button>
+                        }
+                        className="px-5 py-3 hover:bg-gray-100 rounded-l-full"
+                      >
+                        −
+                      </button>
 
-                    <span className="px-5">
-                      {productQuantity}
-                    </span>
+                      <span className="px-5">
+                        {
+                          productQuantity
+                        }
+                      </span>
 
-                    <button
-                      onClick={() =>
-                        setProductQuantity(
-                          productQuantity + 1
-                        )
-                      }
-                      className="px-5 py-3 hover:bg-gray-100 rounded-r-full"
-                    >
-                      +
-                    </button>
+                      <button
+                        onClick={() =>
+                          setProductQuantity(
+                            Math.min(
+                              selectedProduct.stock,
+                              productQuantity +
+                                1
+                            )
+                          )
+                        }
+                        className="px-5 py-3 hover:bg-gray-100 rounded-r-full"
+                      >
+                        +
+                      </button>
+
+                    </div>
 
                   </div>
-
-                </div>
+                )}
 
                 {/* TOTAL */}
 
-                <div className="flex justify-between border-t mt-8 pt-5">
+                {selectedProduct.stock >
+                  0 && (
 
-                  <span>
-                    Total
-                  </span>
+                  <div className="flex justify-between border-t mt-8 pt-5">
 
-                  <strong>
-                    ₹
-                    {(
-                      selectedProduct.price *
-                      productQuantity
-                    ).toLocaleString(
-                      "en-IN"
-                    )}
-                  </strong>
+                    <span>
+                      Total
+                    </span>
 
-                </div>
+                    <strong>
+                      ₹
+                      {(
+                        selectedProduct.price *
+                        productQuantity
+                      ).toLocaleString(
+                        "en-IN"
+                      )}
+                    </strong>
+
+                  </div>
+                )}
 
                 {/* ADD TO CART */}
 
@@ -1126,9 +1346,21 @@ function App() {
                   onClick={
                     addSelectedProduct
                   }
-                  className="w-full bg-black text-white py-4 rounded-full mt-6 font-semibold hover:bg-gray-800 transition"
+                  disabled={
+                    selectedProduct.stock <=
+                    0
+                  }
+                  className={`w-full text-white py-4 rounded-full mt-6 font-semibold transition ${
+                    selectedProduct.stock >
+                    0
+                      ? "bg-black hover:bg-gray-800"
+                      : "bg-gray-400 cursor-not-allowed"
+                  }`}
                 >
-                  Add to Cart
+                  {selectedProduct.stock >
+                  0
+                    ? "Add to Cart"
+                    : "Out of Stock"}
                 </button>
 
               </div>

@@ -17,15 +17,18 @@ app.use(express.json())
 // =====================================================
 
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "Rahul@123",
-  database: "RMerch",
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 })
 
 db.connect((err) => {
   if (err) {
-    console.error("❌ MySQL connection failed:", err.message)
+    console.error(
+      "❌ MySQL connection failed:",
+      err.message
+    )
     return
   }
 
@@ -38,7 +41,8 @@ db.connect((err) => {
 
 app.get("/", (req, res) => {
   res.json({
-    message: "Tr&Ra Merch Store Backend is running 🚀",
+    message:
+      "Tr&Ra Merch Store Backend is running 🚀",
   })
 })
 
@@ -47,22 +51,30 @@ app.get("/", (req, res) => {
 // =====================================================
 
 app.get("/api/test-db", (req, res) => {
-  db.query("SELECT 1 AS test", (err, result) => {
-    if (err) {
-      console.error("Database test error:", err)
+  db.query(
+    "SELECT 1 AS test",
+    (err, result) => {
+      if (err) {
+        console.error(
+          "Database test error:",
+          err
+        )
 
-      return res.status(500).json({
-        success: false,
-        message: "Database connection failed",
+        return res.status(500).json({
+          success: false,
+          message:
+            "Database connection failed",
+        })
+      }
+
+      res.json({
+        success: true,
+        message:
+          "MySQL database connected successfully",
+        result: result,
       })
     }
-
-    res.json({
-      success: true,
-      message: "MySQL database connected successfully",
-      result: result,
-    })
-  })
+  )
 })
 
 // =====================================================
@@ -76,26 +88,34 @@ app.get("/api/products", (req, res) => {
       product_name,
       category,
       price,
-      stock
+      stock,
+      image_url
     FROM products
     ORDER BY product_id ASC
   `
 
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("Products error:", err)
+  db.query(
+    sql,
+    (err, results) => {
+      if (err) {
+        console.error(
+          "Products error:",
+          err
+        )
 
-      return res.status(500).json({
-        success: false,
-        message: "Failed to fetch products",
+        return res.status(500).json({
+          success: false,
+          message:
+            "Failed to fetch products",
+        })
+      }
+
+      res.json({
+        success: true,
+        products: results,
       })
     }
-
-    res.json({
-      success: true,
-      products: results,
-    })
-  })
+  )
 })
 
 // =====================================================
@@ -103,12 +123,16 @@ app.get("/api/products", (req, res) => {
 // =====================================================
 
 app.post("/api/login", (req, res) => {
-  const { email, password } = req.body
+  const {
+    email,
+    password,
+  } = req.body
 
   if (!email || !password) {
     return res.status(400).json({
       success: false,
-      message: "Email and password are required",
+      message:
+        "Email and password are required",
     })
   }
 
@@ -119,7 +143,8 @@ app.post("/api/login", (req, res) => {
       email,
       city
     FROM customers
-    WHERE email = ? AND password = ?
+    WHERE email = ?
+    AND password = ?
     LIMIT 1
   `
 
@@ -128,7 +153,10 @@ app.post("/api/login", (req, res) => {
     [email, password],
     (err, results) => {
       if (err) {
-        console.error("Login error:", err)
+        console.error(
+          "Login error:",
+          err
+        )
 
         return res.status(500).json({
           success: false,
@@ -139,13 +167,15 @@ app.post("/api/login", (req, res) => {
       if (results.length === 0) {
         return res.status(401).json({
           success: false,
-          message: "Invalid email or password",
+          message:
+            "Invalid email or password",
         })
       }
 
       res.json({
         success: true,
-        message: "Login successful",
+        message:
+          "Login successful",
         user: results[0],
       })
     }
@@ -191,14 +221,16 @@ app.post("/api/register", (req, res) => {
 
         return res.status(500).json({
           success: false,
-          message: "Server error",
+          message:
+            "Server error",
         })
       }
 
       if (results.length > 0) {
         return res.status(409).json({
           success: false,
-          message: "Email already registered",
+          message:
+            "Email already registered",
         })
       }
 
@@ -268,7 +300,8 @@ app.post("/api/orders", (req, res) => {
   if (!customer_id) {
     return res.status(400).json({
       success: false,
-      message: "Customer ID is required",
+      message:
+        "Customer ID is required",
     })
   }
 
@@ -278,7 +311,8 @@ app.post("/api/orders", (req, res) => {
   ) {
     return res.status(400).json({
       success: false,
-      message: "Cart is empty",
+      message:
+        "Cart is empty",
     })
   }
 
@@ -355,8 +389,12 @@ app.post("/api/orders", (req, res) => {
         )
 
         if (
-          !Number.isInteger(productId) ||
-          !Number.isInteger(quantity) ||
+          !Number.isInteger(
+            productId
+          ) ||
+          !Number.isInteger(
+            quantity
+          ) ||
           quantity <= 0
         ) {
           return rollback(
@@ -422,7 +460,9 @@ app.post("/api/orders", (req, res) => {
             verifiedItems.push({
               product_id:
                 product.product_id,
+
               quantity: quantity,
+
               price: Number(
                 product.price
               ),
@@ -681,11 +721,15 @@ app.post("/api/orders", (req, res) => {
                 "Order placed successfully",
 
               order: {
-                order_id: orderId,
+                order_id:
+                  orderId,
+
                 customer_id:
                   customer_id,
+
                 total_amount:
                   totalAmount,
+
                 payment_mode:
                   payment_mode ||
                   "Cash on Delivery",
@@ -706,6 +750,11 @@ function rollback(
   res,
   message
 ) {
+  console.error(
+    "❌ Order rollback:",
+    message
+  )
+
   db.rollback(() => {
     res.status(400).json({
       success: false,
@@ -718,7 +767,7 @@ function rollback(
 // START SERVER
 // =====================================================
 
-const PORT = 5001
+const PORT = process.env.PORT || 5001
 
 app.listen(PORT, () => {
   console.log(
